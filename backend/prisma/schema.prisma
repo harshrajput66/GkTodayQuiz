@@ -1,0 +1,73 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(uuid())
+  name         String
+  email        String        @unique
+  passwordHash String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  attempts     QuizAttempt[]
+
+  @@map("users")
+}
+
+model Question {
+  id            String          @id @default(uuid())
+  question      String
+  optionA       String
+  optionB       String
+  optionC       String
+  optionD       String
+  correctAnswer String          // "A", "B", "C", or "D"
+  explanation   String
+  sourcePdf     String          @default("")
+  checksum      String          @unique
+  createdAt     DateTime        @default(now())
+  answers       AttemptAnswer[]
+
+  @@map("questions")
+}
+
+model QuizAttempt {
+  id             String          @id @default(uuid())
+  userId         String
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score          Float           @default(0)
+  totalQuestions Int             @default(30)
+  correctCount   Int             @default(0)
+  incorrectCount Int             @default(0)
+  skippedCount   Int             @default(0)
+  percentage     Float           @default(0)
+  timeTaken      Int             @default(0) // seconds
+  passed         Boolean         @default(false)
+  startedAt      DateTime        @default(now())
+  submittedAt    DateTime?
+  answers        AttemptAnswer[]
+
+  @@map("quiz_attempts")
+}
+
+model AttemptAnswer {
+  id             String      @id @default(uuid())
+  attemptId      String
+  attempt        QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId     String
+  question       Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  questionOrder  Int
+  optionOrder    String      // JSON string: shuffled option mapping
+  selectedAnswer String?     // null if skipped
+  isCorrect      Boolean     @default(false)
+
+  @@map("attempt_answers")
+}
