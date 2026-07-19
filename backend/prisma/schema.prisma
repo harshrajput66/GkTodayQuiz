@@ -22,6 +22,19 @@ model User {
   @@map("users")
 }
 
+model OtpVerification {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  otpHash      String
+  expiresAt    DateTime
+  attempts     Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  @@map("otp_verifications")
+}
+
 model Question {
   id            String          @id @default(uuid())
   question      String

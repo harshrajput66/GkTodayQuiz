@@ -44,13 +44,26 @@ export function AuthProvider({ children }) {
     return u;
   }, []);
 
-  const register = useCallback(async (name, email, password) => {
+  // Step 1: Send OTP (does not create user yet)
+  const sendOtp = useCallback(async (name, email, password) => {
     const res = await authAPI.register({ name, email, password });
+    return res.data; // { success, message, data: { email } }
+  }, []);
+
+  // Step 2: Verify OTP → creates user + returns JWT
+  const verifyOtp = useCallback(async (email, otp) => {
+    const res = await authAPI.verifyOtp({ email, otp });
     const { user: u, token } = res.data.data;
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(u));
     setUser(u);
     return u;
+  }, []);
+
+  // Resend OTP
+  const resendOtp = useCallback(async (email) => {
+    const res = await authAPI.resendOtp({ email });
+    return res.data;
   }, []);
 
   const logout = useCallback(() => {
@@ -60,7 +73,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, sendOtp, verifyOtp, resendOtp, logout }}>
       {children}
     </AuthContext.Provider>
   );
